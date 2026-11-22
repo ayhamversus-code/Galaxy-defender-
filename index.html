@@ -1,0 +1,1516 @@
+html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدافع المجرة | Neon Galaxy Defender</title>
+    <!-- استيراد خط القاهرة (Cairo) العصري للغة العربية -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS للتنسيق السريع والمرن -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* تخصيص الخطوط والألوان العامة */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #050714;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* تأثيرات توهج النيون */
+        .neon-text-cyan {
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.8), 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        .neon-text-pink {
+            text-shadow: 0 0 10px rgba(255, 0, 128, 0.8), 0 0 20px rgba(255, 0, 128, 0.5);
+        }
+
+        .neon-text-gold {
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        /* أزرار الألعاب بتأثير نيون وتدرج لوني */
+        .game-btn {
+            background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
+            box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 25px rgba(0, 243, 255, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .game-btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
+
+        .game-btn-pink {
+            background: linear-gradient(135deg, #ff007f 0%, #7928ca 100%);
+            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+        }
+
+        .game-btn-pink:hover {
+            box-shadow: 0 6px 25px rgba(255, 0, 127, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        /* حاوية اللعبة والكانفاس */
+        #game-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-left: 1px solid rgba(0, 243, 255, 0.15);
+            border-right: 1px solid rgba(0, 243, 255, 0.15);
+            background: radial-gradient(circle at center, #0b1026 0%, #050714 100%);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* نوافذ الواجهة العائمة (البداية، الإيقاف المؤقت، نهاية اللعبة) */
+        .overlay-panel {
+            background: rgba(10, 15, 36, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
+        }
+
+        /* شريط الصحة والطاقة */
+        .health-bar-bg {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+
+        .animate-pulse-slow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الشريط العلوي للتحكم والإحصائيات خارج مساحة اللعب الأساسية -->
+    <header class="w-full max-w-[900px] mx-auto px-3 py-2.5 bg-[#090d22] border-b border-cyan-500/20 flex items-center justify-between gap-2 z-20 shrink-0">
+        <!-- النقاط وأعلى نتيجة -->
+        <div class="flex items-center gap-2.5 sm:gap-4">
+            <!-- شارة العلامة التجارية vortex.com -->
+            <a href="https://vortex.com" target="_blank" rel="noopener noreferrer" dir="ltr" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-black text-xs sm:text-sm tracking-wider transition shadow-sm shadow-cyan-500/20 hover:scale-105">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                <span>vortex.com</span>
+            </a>
+
+            <div class="h-7 w-[1px] bg-white/10"></div>
+
+            <div class="flex flex-col">
+                <span class="text-[11px] sm:text-xs text-cyan-300/80 font-semibold">النقاط</span>
+                <span id="score-display" class="text-lg sm:text-2xl font-black text-white neon-text-cyan leading-none">0</span>
+            </div>
+            <div class="h-7 w-[1px] bg-white/10"></div>
+            <div class="flex flex-col">
+                <span class="text-[11px] sm:text-xs text-amber-300/80 font-semibold">أعلى نتيجة</span>
+                <span id="highscore-display" class="text-base sm:text-xl font-bold text-amber-400 neon-text-gold leading-none">0</span>
+            </div>
+            <div class="h-7 w-[1px] bg-white/10 hidden md:block"></div>
+            <div class="hidden md:flex flex-col">
+                <span class="text-xs text-pink-300/80 font-semibold">المستوى</span>
+                <span id="level-display" class="text-xl font-bold text-pink-400 neon-text-pink leading-none">1</span>
+            </div>
+        </div>
+
+        <!-- شريط الدرع / الصحة -->
+        <div class="flex flex-col items-center w-24 sm:w-36 md:w-40">
+            <div class="flex justify-between w-full text-[11px] sm:text-xs mb-1 font-bold">
+                <span class="text-emerald-300">درع المركبة</span>
+                <span id="health-text" class="text-white">100%</span>
+            </div>
+            <div class="w-full h-2.5 sm:h-3 rounded-full health-bar-bg overflow-hidden p-0.5">
+                <div id="health-bar" class="h-full rounded-full bg-gradient-to-l from-emerald-400 to-cyan-400 transition-all duration-200" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <!-- أزرار التحكم (كتم الصوت والإيقاف المؤقت) -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- مؤشر المستوى للهواتف -->
+            <div class="md:hidden bg-pink-500/20 border border-pink-500/40 px-2 py-1 rounded-lg text-xs font-bold text-pink-300">
+                م <span id="level-display-mobile">1</span>
+            </div>
+
+            <!-- زر الصوت -->
+            <button id="mute-btn" title="تبديل الصوت" class="p-2 sm:p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-cyan-500/30 text-cyan-300 transition active:scale-95">
+                <!-- أيقونة الصوت مفعل -->
+                <svg id="icon-sound-on" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                </svg>
+                <!-- أيقونة الصوت مكتوم -->
+                <svg id="icon-sound-off" class="w-5 h-5 hidden text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                </svg>
+            </button>
+
+            <!-- زر الإيقاف المؤقت -->
+            <button id="pause-btn" title="إيقاف مؤقت" class="p-2 sm:p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-cyan-500/30 text-cyan-300 transition active:scale-95 disabled:opacity-40" disabled>
+                <svg id="icon-pause" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <svg id="icon-play" class="w-5 h-5 hidden text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- حاوية اللعبة الرئيسية -->
+    <main id="game-container">
+        <!-- لوحة الرسم Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- شريط مؤقت للقدرات الخاصة النشطة (Power-ups) -->
+        <div id="powerup-hud" class="absolute top-3 right-3 left-3 flex flex-wrap gap-2 pointer-events-none z-10"></div>
+
+        <!-- إشعار ترقية المستوى -->
+        <div id="level-banner" class="absolute inset-x-0 top-1/4 flex flex-col items-center justify-center pointer-events-none opacity-0 transition-all duration-500 transform scale-90 z-10">
+            <span class="text-sm sm:text-base font-bold text-cyan-300 tracking-widest">استعد للموجة القادمة</span>
+            <h2 id="level-banner-text" class="text-4xl sm:text-6xl font-black text-white neon-text-pink mt-1">المستوى 2</h2>
+        </div>
+
+        <!-- شاشة البداية (Start Screen) -->
+        <div id="start-screen" class="absolute inset-0 flex items-center justify-center p-4 z-30 bg-[#050714]/70 backdrop-blur-sm">
+            <div class="overlay-panel rounded-3xl p-6 sm:p-8 max-w-md w-full text-center relative overflow-hidden">
+                <!-- أيقونة مركبة فضائية SVG -->
+                <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center animate-pulse-slow shadow-lg shadow-cyan-500/20">
+                    <svg class="w-12 h-12 text-cyan-400" viewBox="0 0 64 64" fill="none">
+                        <path d="M32 4L44 36L56 46L42 48L38 58L32 52L26 58L22 48L8 46L20 36L32 4Z" fill="url(#shipGrad)" stroke="#00f3ff" stroke-width="2.5" stroke-linejoin="round"/>
+                        <circle cx="32" cy="28" r="5" fill="#ffffff"/>
+                        <defs>
+                            <linearGradient id="shipGrad" x1="32" y1="4" x2="32" y2="58" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#00f3ff" stop-opacity="0.6"/>
+                                <stop offset="1" stop-color="#0051ff" stop-opacity="0.2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <h1 class="text-3xl sm:text-4xl font-black text-white neon-text-cyan mb-2">مدافع المجرة</h1>
+                <p class="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">
+                    تصدَّ لأسراب الغزاة الفضائيين، اجمع تعزيزات الطاقة، وحافظ على درع مركبتك لتحقيق أعلى رقم قياسي!
+                </p>
+
+                <!-- شرح عناصر التعزيز -->
+                <div class="grid grid-cols-3 gap-2 mb-6 text-xs bg-slate-900/60 p-3 rounded-2xl border border-white/10">
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 font-bold">⚡</span>
+                        <span class="text-slate-300">ليزر ثلاثي</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center text-emerald-300 font-bold">✚</span>
+                        <span class="text-slate-300">إصلاح الدرع</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <span class="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300 font-bold">🛡️</span>
+                        <span class="text-slate-300">حماية مؤقتة</span>
+                    </div>
+                </div>
+
+                <!-- تعليمات التحكم -->
+                <div class="text-xs text-cyan-200/80 mb-6 bg-cyan-950/40 py-2.5 px-3 rounded-xl border border-cyan-500/20">
+                    💻 <b>الحاسوب:</b> الأسهم أو WASD للحركة (الإطلاق تلقائي)<br>
+                    📱 <b>الهاتف / الفأرة:</b> اسحب في أي مكان لتحريك المركبة
+                </div>
+
+                <button id="start-btn" class="game-btn w-full py-3.5 px-6 rounded-2xl text-lg sm:text-xl font-black text-white tracking-wide cursor-pointer">
+                    🚀 ابدأ المعركة الآن
+                </button>
+
+                <!-- رابط الموقع الرسمي في شاشة البداية -->
+                <div class="mt-4 pt-3 border-t border-white/10">
+                    <a href="https://vortex.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 hover:text-white text-sm font-bold transition">
+                        <span>🌐 زيارة الموقع الرسمي:</span>
+                        <span dir="ltr" class="text-cyan-400 underline decoration-cyan-400/50">vortex.com</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة الإيقاف المؤقت (Pause Screen) -->
+        <div id="pause-screen" class="hidden absolute inset-0 flex items-center justify-center p-4 z-30 bg-[#050714]/75 backdrop-blur-sm">
+            <div class="overlay-panel rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center">
+                <h2 class="text-3xl font-black text-white neon-text-cyan mb-2">اللعبة متوقفة</h2>
+                <p class="text-slate-300 text-sm mb-6">خذ نفساً عميقاً واستعد لمواصلة الدفاع عن المجرة</p>
+                <div class="flex flex-col gap-3">
+                    <button id="resume-btn" class="game-btn w-full py-3 px-6 rounded-2xl text-lg font-bold text-white cursor-pointer">
+                        ▶️ متابعة اللعب
+                    </button>
+                    <button id="restart-pause-btn" class="w-full py-3 px-6 rounded-2xl text-base font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-white/15 transition cursor-pointer">
+                        🔄 إعادة البدء
+                    </button>
+                    <a href="https://vortex.com" target="_blank" rel="noopener noreferrer" class="w-full py-2.5 px-6 rounded-2xl text-sm font-bold text-cyan-300 bg-cyan-950/50 hover:bg-cyan-900/60 border border-cyan-500/30 transition flex items-center justify-center gap-2">
+                        <span>🔗 الموقع الرسمي</span>
+                        <span dir="ltr" class="text-cyan-400">vortex.com</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة نهاية اللعبة (Game Over Screen) -->
+        <div id="gameover-screen" class="hidden absolute inset-0 flex items-center justify-center p-4 z-30 bg-[#050714]/80 backdrop-blur-md">
+            <div class="overlay-panel rounded-3xl p-6 sm:p-8 max-w-md w-full text-center border-pink-500/40">
+                <div class="text-5xl mb-3">💥</div>
+                <h2 class="text-3xl sm:text-4xl font-black text-rose-400 neon-text-pink mb-1">تحطمت المركبة!</h2>
+                <p id="new-record-badge" class="hidden inline-block bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-bold px-3 py-1 rounded-full mb-3 animate-bounce">
+                    🏆 رقم قياسي جديد!
+                </p>
+                <p class="text-slate-300 text-sm mb-6">لقد قاتلت بشجاعة ضد أسطول الغزاة</p>
+
+                <!-- ملخص النتائج -->
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-slate-900/80 p-3.5 rounded-2xl border border-cyan-500/20">
+                        <span class="block text-xs text-slate-400 mb-1">النتيجة النهائية</span>
+                        <span id="final-score" class="text-2xl sm:text-3xl font-black text-cyan-400 neon-text-cyan">0</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-2xl border border-amber-500/20">
+                        <span class="block text-xs text-slate-400 mb-1">أعلى نتيجة</span>
+                        <span id="final-highscore" class="text-2xl sm:text-3xl font-black text-amber-400 neon-text-gold">0</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 py-2 px-4 rounded-xl border border-white/10 mb-6 flex justify-between text-sm">
+                    <span class="text-slate-400">المستوى الذي وصلت إليه:</span>
+                    <span id="final-level" class="font-bold text-pink-400">المستوى 1</span>
+                </div>
+
+                <button id="restart-btn" class="game-btn game-btn-pink w-full py-3.5 px-6 rounded-2xl text-lg sm:text-xl font-black text-white cursor-pointer">
+                    🔄 العب مرة أخرى
+                </button>
+
+                <!-- رابط vortex.com في شاشة نهاية اللعبة -->
+                <div class="mt-4 pt-3 border-t border-white/10">
+                    <a href="https://vortex.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-slate-900/90 hover:bg-pink-950/50 border border-pink-500/30 text-pink-300 hover:text-white text-sm font-bold transition">
+                        <span>🚀 اكتشف المزيد على</span>
+                        <span dir="ltr" class="text-cyan-400 underline decoration-cyan-400/50">vortex.com</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- علامة مائية وتذييل أنيق أسفل واجهة اللعب -->
+        <div class="absolute bottom-2 left-3 z-20 pointer-events-auto">
+            <a href="https://vortex.com" target="_blank" rel="noopener noreferrer" dir="ltr" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#090d22]/75 hover:bg-[#090d22] border border-cyan-500/25 text-[11px] font-bold text-cyan-300/80 hover:text-cyan-300 backdrop-blur-sm transition">
+                <span class="text-cyan-400">⚡</span>
+                <span>Powered by vortex.com</span>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * ============================================================================
+         * محرك الصوتيات التفاعلي باستخدام Web Audio API (بدون ملفات صوت خارجية)
+         * ============================================================================
+         */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                return this.muted;
+            }
+
+            // صوت إطلاق الليزر
+            playLaser(isTriple = false) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = isTriple ? 'sawtooth' : 'triangle';
+                    osc.frequency.setValueAtTime(isTriple ? 950 : 800, now);
+                    osc.frequency.exponentialRampToValueAtTime(180, now + 0.11);
+
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } catch (e) {}
+            }
+
+            // صوت انفجار العدو أو الاصطدام
+            playExplosion(big = false) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const duration = big ? 0.45 : 0.22;
+                    const bufferSize = this.ctx.sampleRate * duration;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(big ? 600 : 900, now);
+                    filter.frequency.exponentialRampToValueAtTime(60, now + duration);
+
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(big ? 0.25 : 0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    noise.start(now);
+                } catch (e) {}
+            }
+
+            // صوت التقاط تعزيز طاقة
+            playPowerup() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+                        gain.gain.setValueAtTime(0.1, now + idx * 0.055);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.15);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + idx * 0.055);
+                        osc.stop(now + idx * 0.055 + 0.15);
+                    });
+                } catch (e) {}
+            }
+
+            // صوت تضرر اللاعب
+            playDamage() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.linearRampToValueAtTime(55, now + 0.25);
+
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } catch (e) {}
+            }
+
+            // صوت الانتقال لمستوى جديد
+            playLevelUp() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    const notes = [440, 554.37, 659.25, 880];
+                    notes.forEach((freq, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                        gain.gain.setValueAtTime(0.12, now + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + i * 0.08);
+                        osc.stop(now + i * 0.08 + 0.25);
+                    });
+                } catch (e) {}
+            }
+        }
+
+        /**
+         * ============================================================================
+         * تهيئة المتغيرات وعناصر واجهة المستخدم
+         * ============================================================================
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game-container');
+        const sound = new SoundEngine();
+
+        // عناصر الواجهة
+        const scoreEl = document.getElementById('score-display');
+        const highScoreEl = document.getElementById('highscore-display');
+        const levelEl = document.getElementById('level-display');
+        const levelMobileEl = document.getElementById('level-display-mobile');
+        const healthBarEl = document.getElementById('health-bar');
+        const healthTextEl = document.getElementById('health-text');
+        const powerupHudEl = document.getElementById('powerup-hud');
+        const levelBannerEl = document.getElementById('level-banner');
+        const levelBannerTextEl = document.getElementById('level-banner-text');
+
+        // الشاشات والأزرار
+        const startScreen = document.getElementById('start-screen');
+        const pauseScreen = document.getElementById('pause-screen');
+        const gameOverScreen = document.getElementById('gameover-screen');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const restartPauseBtn = document.getElementById('restart-pause-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const muteBtn = document.getElementById('mute-btn');
+
+        // حالة اللعبة
+        const GAME_STATE = {
+            MENU: 'MENU',
+            PLAYING: 'PLAYING',
+            PAUSED: 'PAUSED',
+            GAMEOVER: 'GAMEOVER'
+        };
+
+        let currentState = GAME_STATE.MENU;
+        let width = 0;
+        let height = 0;
+        let lastTime = 0;
+        let animationFrameId = null;
+
+        // بيانات التقدم
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('neon_galaxy_highscore') || '0', 10);
+        let level = 1;
+        let screenShake = 0;
+
+        highScoreEl.textContent = highScore.toLocaleString('en-US');
+
+        // كائن اللاعب
+        const player = {
+            x: 0,
+            y: 0,
+            width: 44,
+            height: 50,
+            speed: 440,
+            health: 100,
+            maxHealth: 100,
+            fireCooldown: 0,
+            fireRate: 0.17, // ثانية بين كل طلقة
+            tripleShotTimer: 0,
+            shieldTimer: 0,
+            invulnerableTimer: 0,
+            thrusterPhase: 0
+        };
+
+        // مصفوفات الكيانات
+        let stars = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let enemies = [];
+        let particles = [];
+        let powerups = [];
+        let floatingTexts = [];
+
+        // مؤقتات التوليد
+        let enemySpawnTimer = 0;
+
+        // مدخلات التحكم
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            ArrowDown: false,
+            KeyA: false,
+            KeyD: false,
+            KeyW: false,
+            KeyS: false
+        };
+
+        let pointerActive = false;
+        let pointerTargetX = null;
+        let pointerTargetY = null;
+
+        /**
+         * ============================================================================
+         * ضبط أبعاد الكانفاس المتجاوبة
+         * ============================================================================
+         */
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+            canvas.width = width;
+            canvas.height = height;
+
+            // إبقاء اللاعب داخل الحدود عند تغيير حجم الشاشة
+            if (player.x === 0 && player.y === 0) {
+                player.x = width / 2;
+                player.y = height - 85;
+            } else {
+                player.x = Math.max(player.width / 2, Math.min(width - player.width / 2, player.x));
+                player.y = Math.max(player.height / 2, Math.min(height - player.height / 2, player.y));
+            }
+
+            // إعادة توزيع النجوم في الخلفية
+            if (stars.length === 0) {
+                initStars();
+            }
+        }
+
+        function initStars() {
+            stars = [];
+            const starCount = Math.floor((width * height) / 7500);
+            for (let i = 0; i < Math.max(45, starCount); i++) {
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2.2 + 0.5,
+                    speed: Math.random() * 90 + 25,
+                    alpha: Math.random() * 0.7 + 0.3,
+                    color: Math.random() > 0.8 ? '#00f3ff' : (Math.random() > 0.85 ? '#ff007f' : '#ffffff')
+                });
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        /**
+         * ============================================================================
+         * إدارة دورة حياة اللعبة (بدء، إيقاف، إعادة تشغيل)
+         * ============================================================================
+         */
+        function startGame() {
+            sound.init();
+            score = 0;
+            level = 1;
+            player.x = width / 2;
+            player.y = height - 85;
+            player.health = 100;
+            player.fireCooldown = 0;
+            player.tripleShotTimer = 0;
+            player.shieldTimer = 0;
+            player.invulnerableTimer = 0;
+
+            bullets = [];
+            enemyBullets = [];
+            enemies = [];
+            particles = [];
+            powerups = [];
+            floatingTexts = [];
+            enemySpawnTimer = 0.5;
+            screenShake = 0;
+
+            updateHUD();
+            currentState = GAME_STATE.PLAYING;
+
+            startScreen.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseBtn.disabled = false;
+            updatePauseIcon(false);
+
+            showLevelBanner(1);
+            lastTime = performance.now();
+        }
+
+        function togglePause() {
+            if (currentState === GAME_STATE.PLAYING) {
+                currentState = GAME_STATE.PAUSED;
+                pauseScreen.classList.remove('hidden');
+                updatePauseIcon(true);
+            } else if (currentState === GAME_STATE.PAUSED) {
+                currentState = GAME_STATE.PLAYING;
+                pauseScreen.classList.add('hidden');
+                updatePauseIcon(false);
+                lastTime = performance.now();
+            }
+        }
+
+        function updatePauseIcon(isPaused) {
+            const iconPause = document.getElementById('icon-pause');
+            const iconPlay = document.getElementById('icon-play');
+            if (isPaused) {
+                iconPause.classList.add('hidden');
+                iconPlay.classList.remove('hidden');
+            } else {
+                iconPause.classList.remove('hidden');
+                iconPlay.classList.add('hidden');
+            }
+        }
+
+        function triggerGameOver() {
+            currentState = GAME_STATE.GAMEOVER;
+            pauseBtn.disabled = true;
+            sound.playExplosion(true);
+
+            // انفجار ضخم لمركبة اللاعب
+            createExplosion(player.x, player.y, '#00f3ff', 45);
+            createExplosion(player.x, player.y, '#ff007f', 35);
+
+            const isNewRecord = score > highScore;
+            if (isNewRecord) {
+                highScore = score;
+                localStorage.setItem('neon_galaxy_highscore', highScore.toString());
+                highScoreEl.textContent = highScore.toLocaleString('en-US');
+            }
+
+            document.getElementById('final-score').textContent = score.toLocaleString('en-US');
+            document.getElementById('final-highscore').textContent = highScore.toLocaleString('en-US');
+            document.getElementById('final-level').textContent = `المستوى ${level}`;
+
+            const newRecordBadge = document.getElementById('new-record-badge');
+            if (isNewRecord && score > 0) {
+                newRecordBadge.classList.remove('hidden');
+            } else {
+                newRecordBadge.classList.add('hidden');
+            }
+
+            setTimeout(() => {
+                if (currentState === GAME_STATE.GAMEOVER) {
+                    gameOverScreen.classList.remove('hidden');
+                }
+            }, 650);
+        }
+
+        function showLevelBanner(lvl) {
+            levelBannerTextEl.textContent = `المستوى ${lvl}`;
+            levelBannerEl.classList.remove('opacity-0', 'scale-90');
+            levelBannerEl.classList.add('opacity-100', 'scale-100');
+            setTimeout(() => {
+                levelBannerEl.classList.remove('opacity-100', 'scale-100');
+                levelBannerEl.classList.add('opacity-0', 'scale-90');
+            }, 1600);
+        }
+
+        /**
+         * ============================================================================
+         * تحديث واجهة المعلومات (HUD)
+         * ============================================================================
+         */
+        function updateHUD() {
+            scoreEl.textContent = score.toLocaleString('en-US');
+            levelEl.textContent = level;
+            levelMobileEl.textContent = level;
+
+            const hpPercent = Math.max(0, Math.round((player.health / player.maxHealth) * 100));
+            healthTextEl.textContent = `${hpPercent}%`;
+            healthBarEl.style.width = `${hpPercent}%`;
+
+            // تغيير لون شريط الصحة حسب النسبة
+            if (hpPercent > 50) {
+                healthBarEl.className = 'h-full rounded-full bg-gradient-to-l from-emerald-400 to-cyan-400 transition-all duration-200';
+            } else if (hpPercent > 25) {
+                healthBarEl.className = 'h-full rounded-full bg-gradient-to-l from-amber-400 to-orange-500 transition-all duration-200';
+            } else {
+                healthBarEl.className = 'h-full rounded-full bg-gradient-to-l from-rose-500 to-red-600 transition-all duration-200 animate-pulse';
+            }
+
+            // تحديث شارات التعزيزات النشطة
+            let badgesHTML = '';
+            if (player.tripleShotTimer > 0) {
+                badgesHTML += `
+                    <div class="bg-cyan-950/85 border border-cyan-400/60 px-2.5 py-1 rounded-full text-xs font-bold text-cyan-300 flex items-center gap-1.5 shadow-md">
+                        <span>⚡ ليزر ثلاثي</span>
+                        <span class="text-white">${player.tripleShotTimer.toFixed(1)}ث</span>
+                    </div>`;
+            }
+            if (player.shieldTimer > 0) {
+                badgesHTML += `
+                    <div class="bg-amber-950/85 border border-amber-400/60 px-2.5 py-1 rounded-full text-xs font-bold text-amber-300 flex items-center gap-1.5 shadow-md">
+                        <span>🛡️ درع طاقة</span>
+                        <span class="text-white">${player.shieldTimer.toFixed(1)}ث</span>
+                    </div>`;
+            }
+            powerupHudEl.innerHTML = badgesHTML;
+        }
+
+        /**
+         * ============================================================================
+         * توليد الأعداء، التعزيزات، والجزيئات
+         * ============================================================================
+         */
+        function spawnEnemy() {
+            const margin = 35;
+            const x = margin + Math.random() * (width - margin * 2);
+            const rand = Math.random();
+
+            // أنواع الأعداء تتدرج مع المستوى
+            let type = 'scout'; // كشاف سريع
+            if (level >= 2 && rand > 0.65) {
+                type = 'fighter'; // مقاتل يطلق النار
+            }
+            if (level >= 3 && rand > 0.86) {
+                type = 'heavy'; // مدرعة ثقيلة
+            }
+
+            const speedMultiplier = 1 + (level - 1) * 0.08;
+
+            if (type === 'scout') {
+                enemies.push({
+                    type: 'scout',
+                    x,
+                    y: -30,
+                    radius: 18,
+                    hp: 1 + Math.floor(level / 4),
+                    maxHp: 1 + Math.floor(level / 4),
+                    speedY: (130 + Math.random() * 60) * speedMultiplier,
+                    speedX: (Math.random() - 0.5) * 90,
+                    color: '#ff007f',
+                    points: 100,
+                    shootTimer: 999,
+                    angle: 0
+                });
+            } else if (type === 'fighter') {
+                enemies.push({
+                    type: 'fighter',
+                    x,
+                    y: -35,
+                    radius: 22,
+                    hp: 2 + Math.floor(level / 3),
+                    maxHp: 2 + Math.floor(level / 3),
+                    speedY: (95 + Math.random() * 35) * speedMultiplier,
+                    speedX: (Math.random() > 0.5 ? 1 : -1) * 75,
+                    color: '#a855f7',
+                    points: 250,
+                    shootTimer: 1.2 + Math.random() * 1.2,
+                    angle: 0
+                });
+            } else {
+                enemies.push({
+                    type: 'heavy',
+                    x,
+                    y: -45,
+                    radius: 30,
+                    hp: 5 + Math.floor(level / 2),
+                    maxHp: 5 + Math.floor(level / 2),
+                    speedY: (60 + Math.random() * 20) * speedMultiplier,
+                    speedX: 0,
+                    color: '#f97316',
+                    points: 500,
+                    shootTimer: 1.6,
+                    angle: 0
+                });
+            }
+        }
+
+        function spawnPowerup(x, y) {
+            // احتمال 22% لإسقاط تعزيز عند تدمير العدو
+            if (Math.random() > 0.22) return;
+
+            const types = ['triple', 'heal', 'shield'];
+            const chosen = types[Math.floor(Math.random() * types.length)];
+            const config = {
+                triple: { color: '#00f3ff', label: '⚡', title: 'ليزر ثلاثي!' },
+                heal: { color: '#10b981', label: '✚', title: 'إصلاح +30' },
+                shield: { color: '#f59e0b', label: '🛡️', title: 'درع حماية!' }
+            };
+
+            powerups.push({
+                x,
+                y,
+                radius: 16,
+                speedY: 115,
+                type: chosen,
+                color: config[chosen].color,
+                label: config[chosen].label,
+                title: config[chosen].title,
+                pulse: 0
+            });
+        }
+
+        function createExplosion(x, y, color, count = 18) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 220 + 40;
+                particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 3.5 + 1.5,
+                    color,
+                    alpha: 1,
+                    decay: Math.random() * 1.5 + 1.1
+                });
+            }
+        }
+
+        function addFloatingText(x, y, text, color = '#ffffff') {
+            floatingTexts.push({
+                x,
+                y,
+                text,
+                color,
+                alpha: 1,
+                vy: -45
+            });
+        }
+
+        /**
+         * ============================================================================
+         * تحديث منطق اللعبة (60 إطار في الثانية)
+         * ============================================================================
+         */
+        function update(dt) {
+            // تحديث النجوم في الخلفية دائماً لإعطاء حيوية للشاشة
+            stars.forEach(star => {
+                star.y += star.speed * dt * (currentState === GAME_STATE.PLAYING ? 1.4 : 0.5);
+                if (star.y > height) {
+                    star.y = 0;
+                    star.x = Math.random() * width;
+                }
+            });
+
+            if (currentState !== GAME_STATE.PLAYING) return;
+
+            // تقليل اهتزاز الشاشة تدريجياً
+            if (screenShake > 0) {
+                screenShake = Math.max(0, screenShake - dt * 28);
+            }
+
+            // تحديث مؤقتات قدرات اللاعب
+            if (player.tripleShotTimer > 0) player.tripleShotTimer = Math.max(0, player.tripleShotTimer - dt);
+            if (player.shieldTimer > 0) player.shieldTimer = Math.max(0, player.shieldTimer - dt);
+            if (player.invulnerableTimer > 0) player.invulnerableTimer = Math.max(0, player.invulnerableTimer - dt);
+            player.thrusterPhase += dt * 25;
+
+            // حركة اللاعب عبر لوحة المفاتيح
+            let moveX = 0;
+            let moveY = 0;
+            if (keys.ArrowLeft || keys.KeyA) moveX -= 1;
+            if (keys.ArrowRight || keys.KeyD) moveX += 1;
+            if (keys.ArrowUp || keys.KeyW) moveY -= 1;
+            if (keys.ArrowDown || keys.KeyS) moveY += 1;
+
+            if (moveX !== 0 || moveY !== 0) {
+                const len = Math.hypot(moveX, moveY);
+                player.x += (moveX / len) * player.speed * dt;
+                player.y += (moveY / len) * player.speed * dt;
+                pointerTargetX = null;
+                pointerTargetY = null;
+            } else if (pointerActive && pointerTargetX !== null && pointerTargetY !== null) {
+                // حركة سلسة نحو إصبع اللمس أو مؤشر الفأرة
+                const dx = pointerTargetX - player.x;
+                const dy = pointerTargetY - player.y;
+                player.x += dx * Math.min(1, dt * 16);
+                player.y += dy * Math.min(1, dt * 16);
+            }
+
+            // تقييد حركة اللاعب داخل حدود الشاشة
+            const padX = player.width * 0.55;
+            const padY = player.height * 0.55;
+            player.x = Math.max(padX, Math.min(width - padX, player.x));
+            player.y = Math.max(padY + 20, Math.min(height - padY, player.y));
+
+            // إطلاق النار التلقائي
+            player.fireCooldown -= dt;
+            if (player.fireCooldown <= 0) {
+                const isTriple = player.tripleShotTimer > 0;
+                player.fireCooldown = isTriple ? player.fireRate * 0.9 : player.fireRate;
+
+                if (isTriple) {
+                    bullets.push({ x: player.x, y: player.y - 24, vx: 0, vy: -640, color: '#00f3ff', radius: 4 });
+                    bullets.push({ x: player.x - 14, y: player.y - 16, vx: -95, vy: -620, color: '#38bdf8', radius: 3.5 });
+                    bullets.push({ x: player.x + 14, y: player.y - 16, vx: 95, vy: -620, color: '#38bdf8', radius: 3.5 });
+                } else {
+                    bullets.push({ x: player.x, y: player.y - 24, vx: 0, vy: -620, color: '#00f3ff', radius: 4 });
+                }
+                sound.playLaser(isTriple);
+            }
+
+            // تحديث طلقات اللاعب
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                if (b.y < -20 || b.x < -20 || b.x > width + 20) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // توليد الأعداء بناءً على المستوى
+            enemySpawnTimer -= dt;
+            if (enemySpawnTimer <= 0) {
+                spawnEnemy();
+                const baseInterval = Math.max(0.38, 1.25 - (level - 1) * 0.11);
+                enemySpawnTimer = baseInterval * (0.75 + Math.random() * 0.5);
+            }
+
+            // تحديث الأعداء
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                e.y += e.speedY * dt;
+                e.x += e.speedX * dt;
+                e.angle += dt * 2.5;
+
+                // ارتداد الأعداء من الحواف الجانبية
+                if (e.x < e.radius + 10) {
+                    e.x = e.radius + 10;
+                    e.speedX *= -1;
+                } else if (e.x > width - e.radius - 10) {
+                    e.x = width - e.radius - 10;
+                    e.speedX *= -1;
+                }
+
+                // إطلاق النار من الأعداء المقاتلين والمدرعات
+                e.shootTimer -= dt;
+                if (e.shootTimer <= 0 && e.y > 20 && e.y < height * 0.65) {
+                    e.shootTimer = e.type === 'heavy' ? 1.8 : 2.2;
+                    const angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+                    const bSpeed = 240 + level * 12;
+                    enemyBullets.push({
+                        x: e.x,
+                        y: e.y + e.radius,
+                        vx: Math.cos(angleToPlayer) * bSpeed * 0.45,
+                        vy: Math.max(190, Math.sin(angleToPlayer) * bSpeed),
+                        radius: 5,
+                        color: '#ff2a85'
+                    });
+                }
+
+                // التحقق من اصطدام طلقات اللاعب بالعدو
+                let enemyDestroyed = false;
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const b = bullets[j];
+                    const dist = Math.hypot(b.x - e.x, b.y - e.y);
+                    if (dist < e.radius + b.radius) {
+                        bullets.splice(j, 1);
+                        e.hp -= 1;
+                        createExplosion(b.x, b.y, '#00f3ff', 5);
+
+                        if (e.hp <= 0) {
+                            enemyDestroyed = true;
+                            score += e.points;
+                            sound.playExplosion(e.type === 'heavy');
+                            createExplosion(e.x, e.y, e.color, e.type === 'heavy' ? 30 : 18);
+                            addFloatingText(e.x, e.y, `+${e.points}`, '#ffd700');
+                            spawnPowerup(e.x, e.y);
+
+                            // التحقق من الترقية للمستوى التالي (كل 1500 نقطة)
+                            const newLevel = Math.floor(score / 1500) + 1;
+                            if (newLevel > level) {
+                                level = newLevel;
+                                sound.playLevelUp();
+                                showLevelBanner(level);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (enemyDestroyed) {
+                    enemies.splice(i, 1);
+                    continue;
+                }
+
+                // التحقق من اصطدام العدو بمركبة اللاعب
+                const distToPlayer = Math.hypot(player.x - e.x, player.y - e.y);
+                if (distToPlayer < e.radius + 18) {
+                    enemies.splice(i, 1);
+                    createExplosion(e.x, e.y, e.color, 20);
+                    damagePlayer(e.type === 'heavy' ? 35 : 22);
+                    continue;
+                }
+
+                // حذف العدو إذا خرج من أسفل الشاشة
+                if (e.y > height + 50) {
+                    enemies.splice(i, 1);
+                }
+            }
+
+            // تحديث طلقات الأعداء
+            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                const eb = enemyBullets[i];
+                eb.x += eb.vx * dt;
+                eb.y += eb.vy * dt;
+
+                const dist = Math.hypot(eb.x - player.x, eb.y - player.y);
+                if (dist < eb.radius + 16) {
+                    enemyBullets.splice(i, 1);
+                    createExplosion(eb.x, eb.y, '#ff2a85', 10);
+                    damagePlayer(15);
+                    continue;
+                }
+
+                if (eb.y > height + 20 || eb.x < -20 || eb.x > width + 20) {
+                    enemyBullets.splice(i, 1);
+                }
+            }
+
+            // تحديث تعزيزات الطاقة (Power-ups)
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const p = powerups[i];
+                p.y += p.speedY * dt;
+                p.pulse += dt * 6;
+
+                const dist = Math.hypot(p.x - player.x, p.y - player.y);
+                if (dist < p.radius + 22) {
+                    sound.playPowerup();
+                    addFloatingText(p.x, p.y - 10, p.title, p.color);
+                    createExplosion(p.x, p.y, p.color, 14);
+
+                    if (p.type === 'triple') {
+                        player.tripleShotTimer = 8.0;
+                    } else if (p.type === 'heal') {
+                        player.health = Math.min(player.maxHealth, player.health + 30);
+                    } else if (p.type === 'shield') {
+                        player.shieldTimer = 7.0;
+                    }
+
+                    powerups.splice(i, 1);
+                    continue;
+                }
+
+                if (p.y > height + 30) {
+                    powerups.splice(i, 1);
+                }
+            }
+
+            // تحديث الجزيئات
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const pt = particles[i];
+                pt.x += pt.vx * dt;
+                pt.y += pt.vy * dt;
+                pt.alpha -= pt.decay * dt;
+                if (pt.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // تحديث النصوص العائمة
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy * dt;
+                ft.alpha -= dt * 1.1;
+                if (ft.alpha <= 0) {
+                    floatingTexts.splice(i, 1);
+                }
+            }
+
+            updateHUD();
+        }
+
+        function damagePlayer(amount) {
+            // إذا كان الدرع الذهبي نشطاً أو اللاعب في فترة حماية مؤقتة
+            if (player.shieldTimer > 0) {
+                addFloatingText(player.x, player.y - 25, 'صدّ الدرع الضربة!', '#f59e0b');
+                return;
+            }
+            if (player.invulnerableTimer > 0) return;
+
+            player.health = Math.max(0, player.health - amount);
+            player.invulnerableTimer = 0.7;
+            screenShake = 12;
+            sound.playDamage();
+            updateHUD();
+
+            if (player.health <= 0) {
+                triggerGameOver();
+            }
+        }
+
+        /**
+         * ============================================================================
+         * رسم عناصر اللعبة على Canvas
+         * ============================================================================
+         */
+        function draw() {
+            ctx.save();
+
+            // تطبيق اهتزاز الشاشة عند الاصطدام
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(dx, dy);
+            }
+
+            // مسح الشاشة
+            ctx.clearRect(0, 0, width, height);
+
+            // رسم النجوم المتلألئة في الخلفية
+            stars.forEach(star => {
+                ctx.fillStyle = star.color;
+                ctx.globalAlpha = star.alpha;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            // رسم خطوط شبكة فضائية خفيفة في الأسفل لإضفاء عمق بصري
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.04)';
+            ctx.lineWidth = 1;
+            const gridSize = 60;
+            for (let gx = 0; gx < width; gx += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(gx, 0);
+                ctx.lineTo(gx, height);
+                ctx.stroke();
+            }
+
+            // رسم تعزيزات الطاقة
+            powerups.forEach(p => {
+                const r = p.radius + Math.sin(p.pulse) * 2.5;
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = p.color;
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 2.5;
+                ctx.fillStyle = 'rgba(10, 15, 36, 0.85)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                ctx.font = 'bold 16px Cairo, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(p.label, p.x, p.y + 1);
+                ctx.restore();
+            });
+
+            // رسم طلقات اللاعب
+            bullets.forEach(b => {
+                ctx.save();
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = b.color;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.roundRect(b.x - b.radius * 0.7, b.y - 10, b.radius * 1.4, 18, 4);
+                ctx.fill();
+
+                ctx.strokeStyle = b.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // رسم طلقات الأعداء
+            enemyBullets.forEach(eb => {
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = eb.color;
+                ctx.fillStyle = eb.color;
+                ctx.beginPath();
+                ctx.arc(eb.x, eb.y, eb.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(eb.x, eb.y, eb.radius * 0.45, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // رسم الأعداء
+            enemies.forEach(e => {
+                ctx.save();
+                ctx.translate(e.x, e.y);
+                ctx.shadowBlur = 14;
+                ctx.shadowColor = e.color;
+
+                if (e.type === 'scout') {
+                    // مركبة كشاف مثلثة سريعة
+                    ctx.fillStyle = 'rgba(255, 0, 127, 0.25)';
+                    ctx.strokeStyle = e.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, e.radius);
+                    ctx.lineTo(e.radius, -e.radius * 0.8);
+                    ctx.lineTo(0, -e.radius * 0.3);
+                    ctx.lineTo(-e.radius, -e.radius * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                } else if (e.type === 'fighter') {
+                    // مقاتل سداسي
+                    ctx.fillStyle = 'rgba(168, 85, 247, 0.28)';
+                    ctx.strokeStyle = e.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.beginPath();
+                    for (let k = 0; k < 6; k++) {
+                        const a = (k * Math.PI) / 3 + Math.PI / 6;
+                        const px = Math.cos(a) * e.radius;
+                        const py = Math.sin(a) * e.radius;
+                        if (k === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // قلب المقاتل
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // مدرعة ثقيلة مع شريط صحة صغير
+                    ctx.fillStyle = 'rgba(249, 115, 22, 0.3)';
+                    ctx.strokeStyle = e.color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(0, e.radius);
+                    ctx.lineTo(e.radius * 0.9, e.radius * 0.2);
+                    ctx.lineTo(e.radius * 0.7, -e.radius * 0.8);
+                    ctx.lineTo(-e.radius * 0.7, -e.radius * 0.8);
+                    ctx.lineTo(-e.radius * 0.9, e.radius * 0.2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // شريط صحة المدرعة
+                    ctx.shadowBlur = 0;
+                    const barW = 36;
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(-barW / 2, -e.radius - 12, barW, 4);
+                    ctx.fillStyle = '#f97316';
+                    ctx.fillRect(-barW / 2, -e.radius - 12, barW * (e.hp / e.maxHp), 4);
+                }
+
+                ctx.restore();
+            });
+
+            // رسم مركبة اللاعب (إذا لم تنتهِ اللعبة)
+            if (currentState !== GAME_STATE.GAMEOVER) {
+                const blink = player.invulnerableTimer > 0 && Math.floor(player.invulnerableTimer * 16) % 2 === 0;
+                if (!blink) {
+                    ctx.save();
+                    ctx.translate(player.x, player.y);
+
+                    // لهب المحرك النفاث
+                    const flameH = 14 + Math.sin(player.thrusterPhase) * 5;
+                    const flameGrad = ctx.createLinearGradient(0, 18, 0, 18 + flameH);
+                    flameGrad.addColorStop(0, '#00f3ff');
+                    flameGrad.addColorStop(1, 'rgba(0, 102, 255, 0)');
+                    ctx.fillStyle = flameGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(-8, 18);
+                    ctx.lineTo(8, 18);
+                    ctx.lineTo(0, 18 + flameH);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // جسم المركبة
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = '#00f3ff';
+                    const shipGrad = ctx.createLinearGradient(0, -25, 0, 22);
+                    shipGrad.addColorStop(0, '#00f3ff');
+                    shipGrad.addColorStop(1, '#0284c7');
+
+                    ctx.fillStyle = shipGrad;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, -26); // مقدمة المركبة
+                    ctx.lineTo(22, 16); // الجناح الأيمن
+                    ctx.lineTo(8, 12);
+                    ctx.lineTo(0, 20);
+                    ctx.lineTo(-8, 12);
+                    ctx.lineTo(-22, 16); // الجناح الأيسر
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // قمرة القيادة
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -3, 4.5, 9, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // رسم هالة الدرع الذهبي إذا كان نشطاً
+                    if (player.shieldTimer > 0) {
+                        ctx.strokeStyle = '#f59e0b';
+                        ctx.shadowColor = '#f59e0b';
+                        ctx.shadowBlur = 20;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    ctx.restore();
+                }
+            }
+
+            // رسم الجزيئات (الانفجارات)
+            particles.forEach(pt => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, pt.alpha);
+                ctx.fillStyle = pt.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = pt.color;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // رسم النصوص العائمة (+100، تعزيزات، إلخ)
+            floatingTexts.forEach(ft => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, ft.alpha);
+                ctx.font = 'bold 15px Cairo, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = ft.color;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            });
+
+            ctx.restore();
+        }
+
+        /**
+         * ============================================================================
+         * حلقة الرسوم المتحركة الرئيسية
+         * ============================================================================
+         */
+        function gameLoop(timestamp) {
+            const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+            lastTime = timestamp;
+
+            update(dt);
+            draw();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * ============================================================================
+         * مستمعات الأحداث (لوحة المفاتيح، اللمس، الفأرة، الأزرار)
+         * ============================================================================
+         */
+        window.addEventListener('keydown', (e) => {
+            if (e.code in keys) {
+                keys[e.code] = true;
+                e.preventDefault();
+            }
+            if (e.code === 'Escape' || e.code === 'KeyP') {
+                if (currentState === GAME_STATE.PLAYING || currentState === GAME_STATE.PAUSED) {
+                    togglePause();
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code in keys) {
+                keys[e.code] = false;
+            }
+        });
+
+        // التحكم باللمس والسحب للهواتف والأجهزة اللوحية
+        function updatePointerCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            pointerTargetX = clientX - rect.left;
+            // رفع المركبة قليلاً فوق الإصبع لكي لا يحجب الإصبع الرؤية
+            pointerTargetY = clientY - rect.top - 35;
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (currentState !== GAME_STATE.PLAYING) return;
+            pointerActive = true;
+            const touch = e.touches[0];
+            updatePointerCoords(touch.clientX, touch.clientY);
+        }, { passive: true });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (!pointerActive || currentState !== GAME_STATE.PLAYING) return;
+            const touch = e.touches[0];
+            updatePointerCoords(touch.clientX, touch.clientY);
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', () => {
+            pointerActive = false;
+        });
+
+        // التحكم بالفأرة
+        canvas.addEventListener('mousedown', (e) => {
+            if (currentState !== GAME_STATE.PLAYING) return;
+            pointerActive = true;
+            updatePointerCoords(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!pointerActive || currentState !== GAME_STATE.PLAYING) return;
+            updatePointerCoords(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mouseup', () => {
+            pointerActive = false;
+        });
+
+        // أزرار الواجهة
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        restartPauseBtn.addEventListener('click', startGame);
+        pauseBtn.addEventListener('click', togglePause);
+        resumeBtn.addEventListener('click', togglePause);
+
+        muteBtn.addEventListener('click', () => {
+            sound.init();
+            const isMuted = sound.toggleMute();
+            document.getElementById('icon-sound-on').classList.toggle('hidden', isMuted);
+            document.getElementById('icon-sound-off').classList.toggle('hidden', !isMuted);
+        });
+
+        // تشغيل اللعبة عند اكتمال تحميل الصفحة
+        window.onload = function () {
+            resizeCanvas();
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
